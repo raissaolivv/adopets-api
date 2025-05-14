@@ -1,8 +1,10 @@
 package com.adopets.adopets_api.domain.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -33,7 +35,10 @@ public class Perfil {
         joinColumns = @JoinColumn(name = "perfil_id"),
         inverseJoinColumns = @JoinColumn(name = "publicacao_id")
     )
-    private List<Publicacao> publicacoesCurtidas;
+    // @JsonInclude(JsonInclude.Include.NON_NULL)
+    // @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+    @JsonIgnoreProperties({"perfil", "pet", "usuario", "perfisQueCurtiram"})
+    private List<Publicacao> publicacoesCurtidas = new ArrayList<>();;
 
     @OneToMany(mappedBy = "perfil", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore // Evita o loop infinito na serialização

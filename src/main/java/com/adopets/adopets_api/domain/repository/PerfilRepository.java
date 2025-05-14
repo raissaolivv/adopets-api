@@ -18,4 +18,7 @@ public interface PerfilRepository extends JpaRepository<Perfil, Long>{
     @Transactional
     @Query("UPDATE Perfil p SET p.publicacoesCurtidas = :publicacoes WHERE p.id = :perfilId")
     void atualizarPublicacoesCurtidas(@Param("perfilId") Long perfilId, @Param("publicacoes") List<Publicacao> publicacoes);
+
+    Perfil findByUsuarioId(Long id);
+    void deleteByUsuarioId(Long idUsuario);
 }

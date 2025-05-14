@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.adopets.adopets_api.domain.exception.EntidadeEmUsoException;
 import com.adopets.adopets_api.domain.exception.EntidadeNaoEncontradaException;
 import com.adopets.adopets_api.domain.model.Perfil;
+import com.adopets.adopets_api.domain.model.Pet;
 import com.adopets.adopets_api.domain.model.Publicacao;
 import com.adopets.adopets_api.domain.repository.PerfilRepository;
 import com.adopets.adopets_api.domain.repository.PublicacaoRepository;
@@ -28,62 +29,62 @@ import com.adopets.adopets_api.domain.service.CadastroPerfilService;
 @RestController
 @RequestMapping("/perfil")
 public class PerfilController {
-   
-    @Autowired
-    private PerfilRepository perfilRepository;
 
 	@Autowired
-    private PublicacaoRepository publicacaoRepository ;
+	private PerfilRepository perfilRepository;
 
-    @Autowired
-    private CadastroPerfilService cadastroPerfilService;
+	@Autowired
+	private PublicacaoRepository publicacaoRepository;
 
-    @GetMapping
+	@Autowired
+	private CadastroPerfilService cadastroPerfilService;
+
+	@GetMapping
 	public List<Perfil> listar() {
 		return perfilRepository.findAll();
 	}
-	
+
 	@GetMapping("/{perfilId}")
 	public ResponseEntity<Perfil> buscar(@PathVariable Long perfilId) {
 		Optional<Perfil> perfil = perfilRepository.findById(perfilId);
-		
+
 		if (perfil.isPresent()) {
 			return ResponseEntity.ok(perfil.get());
 		}
-		
+
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Perfil adicionar(@RequestBody Perfil perfil) {
 		return cadastroPerfilService.salvar(perfil);
 	}
-	
+
 	@PutMapping("/{perfilId}")
 	public ResponseEntity<Perfil> atualizar(@PathVariable Long perfilId,
 			@RequestBody Perfil perfil) {
 		Optional<Perfil> perfilAtual = perfilRepository.findById(perfilId);
-		
+
 		if (perfilAtual.isPresent()) {
 			BeanUtils.copyProperties(perfil, perfilAtual.get(), "id");
-			
+
 			Perfil perfilSalvo = cadastroPerfilService.salvar(perfilAtual.get());
 			return ResponseEntity.ok(perfilSalvo);
 		}
-		
+
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@DeleteMapping("/{perfilId}")
 	public ResponseEntity<?> remover(@PathVariable Long perfilId) {
 		try {
-			cadastroPerfilService.remover(perfilId);	
+			cadastroPerfilService.remover(perfilId);
 			return ResponseEntity.noContent().build();
-			
+
 		} catch (EntidadeNaoEncontradaException e) {
 			return ResponseEntity.notFound().build();
-			
+
 		} catch (EntidadeEmUsoException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT)
 					.body(e.getMessage());
@@ -91,11 +92,28 @@ public class PerfilController {
 	}
 
 	@PutMapping("/{perfilId}/curtir/{publicacaoId}")
-	public ResponseEntity<Void> curtirPublicacao(@PathVariable Long perfilId, @PathVariable Long publicacaoId){
+	public ResponseEntity<Void> curtirPublicacao(@PathVariable Long perfilId, @PathVariable Long publicacaoId) {
 		Publicacao publicacao = publicacaoRepository.findById(publicacaoId)
-        .orElseThrow(() -> new RuntimeException("Publicação não encontrada"));
+				.orElseThrow(() -> new RuntimeException("Publicação não encontrada"));
 
 		cadastroPerfilService.curtirPublicacao(perfilId, publicacao);
-		return ResponseEntity.notFound().build();
+		return ResponseEntity.ok().build();
 	}
+
+	@GetMapping("/{perfilId}/curtidas")
+	public List<Publicacao> listarCurtidas(@PathVariable Long perfilId) {
+		Perfil perfil = perfilRepository.findById(perfilId)
+				.orElseThrow(() -> new RuntimeException("Perfil não encontrado"));
+
+		return perfil.getPublicacoesCurtidas();
+	}
+
+	@GetMapping("/{perfilId}/animaisCadastrados")
+	public List<Pet> listarAnimaisCadastrados(@PathVariable Long perfilId) {
+		Perfil perfil = perfilRepository.findById(perfilId)
+				.orElseThrow(() -> new RuntimeException("Perfil não encontrado"));
+
+		return perfil.getAnimaisCadastrados();
+	}
+
 }

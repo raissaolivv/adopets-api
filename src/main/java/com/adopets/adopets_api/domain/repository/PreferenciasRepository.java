@@ -7,5 +7,5 @@ import com.adopets.adopets_api.domain.model.Preferencias;
 
 @Repository
 public interface PreferenciasRepository extends JpaRepository<Preferencias, Long>{
-
+    void deleteByUsuarioId(Long idUsuario);
 }

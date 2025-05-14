@@ -27,61 +27,69 @@ import com.adopets.adopets_api.domain.service.CadastroUsuarioService;
 @RequestMapping("/usuario")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+	@Autowired
+	private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private CadastroUsuarioService cadastroUsuarioService;
+	@Autowired
+	private CadastroUsuarioService cadastroUsuarioService;
 
-    @GetMapping
+	@GetMapping
 	public List<Usuario> listar() {
 		return usuarioRepository.findAll();
 	}
-	
+
 	@GetMapping("/{usuarioId}")
 	public ResponseEntity<Usuario> buscar(@PathVariable Long usuarioId) {
 		Optional<Usuario> usuario = usuarioRepository.findById(usuarioId);
-		
+
 		if (usuario.isPresent()) {
 			return ResponseEntity.ok(usuario.get());
 		}
-		
+
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Usuario adicionar(@RequestBody Usuario usuario) {
 		return cadastroUsuarioService.salvar(usuario);
 	}
-	
+
 	@PutMapping("/{usuarioId}")
 	public ResponseEntity<Usuario> atualizar(@PathVariable Long usuarioId,
 			@RequestBody Usuario usuario) {
 		Optional<Usuario> usuarioAtual = usuarioRepository.findById(usuarioId);
-		
+
 		if (usuarioAtual.isPresent()) {
 			BeanUtils.copyProperties(usuario, usuarioAtual.get(), "id");
-			
+
 			Usuario usuarioSalvo = cadastroUsuarioService.salvar(usuarioAtual.get());
 			return ResponseEntity.ok(usuarioSalvo);
 		}
-		
+
 		return ResponseEntity.notFound().build();
 	}
-	
+
 	@DeleteMapping("/{usuarioId}")
 	public ResponseEntity<?> remover(@PathVariable Long usuarioId) {
 		try {
-			cadastroUsuarioService.remover(usuarioId);	
+			cadastroUsuarioService.remover(usuarioId);
 			return ResponseEntity.noContent().build();
-			
+
 		} catch (EntidadeNaoEncontradaException e) {
 			return ResponseEntity.notFound().build();
-			
+
 		} catch (EntidadeEmUsoException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT)
 					.body(e.getMessage());
 		}
 	}
+
+	//Exclusão de conta
+	@DeleteMapping("/{usuarioId}/excluirTudo")
+	public ResponseEntity<Void> excluirUsuarioComTudo(@PathVariable Long usuarioId) {
+		cadastroUsuarioService.excluirUsuarioComTudo(usuarioId);
+		return ResponseEntity.noContent().build();
+	}
+
 }

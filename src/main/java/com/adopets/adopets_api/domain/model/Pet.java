@@ -1,5 +1,9 @@
 package com.adopets.adopets_api.domain.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -23,7 +28,7 @@ public class Pet {
     private Long id;
 
     @Column(nullable = false)
-    private String  nome;
+    private String nome;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -43,11 +48,11 @@ public class Pet {
     private String raca;
 
     @Column
-    private String descricao; 
+    private String descricao;
 
     @Column(nullable = false)
     private Boolean adotado;
-    
+
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
@@ -55,5 +60,8 @@ public class Pet {
     @ManyToOne
     @JoinColumn(name = "perfil_id", nullable = false)
     private Perfil perfil;
+
+    @OneToMany(mappedBy = "pet", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImagemPet> imagens = new ArrayList<>();
 
 }
