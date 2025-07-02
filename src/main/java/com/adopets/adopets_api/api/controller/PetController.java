@@ -5,12 +5,16 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +36,6 @@ import com.adopets.adopets_api.domain.repository.ImagemPetRepository;
 import com.adopets.adopets_api.domain.repository.PetRepository;
 import com.adopets.adopets_api.domain.service.CadastroPetService;
 
-
 @RestController
 @RequestMapping("/pets")
 public class PetController {
@@ -44,7 +47,7 @@ public class PetController {
 	private CadastroPetService cadastroPetService;
 
 	@Autowired
-    private ImagemPetRepository imagemPetRepository;
+	private ImagemPetRepository imagemPetRepository;
 
 	@GetMapping
 	public List<Pet> listar() {
@@ -96,8 +99,8 @@ public class PetController {
 		}
 	}
 
-	@PutMapping("/{id}/adotar")
-	public ResponseEntity<?> marcarComoAdotado(Long petId) {
+	@PutMapping("/{petId}/adotar")
+	public ResponseEntity<?> marcarComoAdotado(@PathVariable long petId) {
 		try {
 			cadastroPetService.marcarComoAdotado(petId);
 			return ResponseEntity.noContent().build();
@@ -109,13 +112,17 @@ public class PetController {
 	@PostMapping("/{id}/imagens")
 	public ResponseEntity<?> uploadImagens(@PathVariable Long id,
 			@RequestParam("imagens") List<MultipartFile> imagens) throws IOException {
+		System.out.println("Recebendo imagens para o pet ID: " + id);
+		System.out.println("Número de imagens recebidas: " + imagens.size());
 		Optional<Pet> optionalPet = petRepository.findById(id);
-		if (!optionalPet.isPresent())
+		if (!optionalPet.isPresent()) {
+			System.out.println("Pet não encontrado!");
 			return ResponseEntity.notFound().build();
-
+		}
 		Pet pet = optionalPet.get();
 
 		for (MultipartFile imagem : imagens) {
+			System.out.println("Salvando imagem: " + imagem.getOriginalFilename());
 			String nomeArquivo = UUID.randomUUID() + "_" + imagem.getOriginalFilename();
 			Path caminho = Paths.get("uploads", nomeArquivo);
 			Files.write(caminho, imagem.getBytes());
@@ -127,6 +134,35 @@ public class PetController {
 		}
 
 		return ResponseEntity.ok("Imagens salvas com sucesso.");
+	}
+
+	@GetMapping("/uploads/{nomeArquivo:.+}")
+	public ResponseEntity<Resource> servirImagem(@PathVariable String nomeArquivo) throws IOException {
+		Path caminho = Paths.get("uploads").resolve(nomeArquivo).normalize();
+		Resource recurso = new UrlResource(caminho.toUri());
+
+		if (!recurso.exists()) {
+			return ResponseEntity.notFound().build();
+		}
+
+		return ResponseEntity.ok()
+				.contentType(MediaType.IMAGE_JPEG) // ou use MediaTypeFactory para detectar
+				.body(recurso);
+	}
+
+	@GetMapping("/{id}/imagens")
+	public ResponseEntity<List<Map<String, String>>> listarImagensDoPet(@PathVariable Long id) {
+		Optional<Pet> optionalPet = petRepository.findById(id);
+		if (!optionalPet.isPresent()) {
+			return ResponseEntity.notFound().build();
+		}
+
+		List<ImagemPet> imagens = imagemPetRepository.findByPetId(id);
+		List<Map<String, String>> caminhos = imagens.stream()
+				.map(img -> Map.of("caminho", img.getCaminho()))
+				.toList();
+
+		return ResponseEntity.ok(caminhos);
 	}
 
 }

@@ -1,5 +1,8 @@
 package com.adopets.adopets_api.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,5 +24,6 @@ public class ImagemPet {
 
     @ManyToOne
     @JoinColumn(name = "pet_id")
+    @JsonBackReference
     private Pet pet;
 }
